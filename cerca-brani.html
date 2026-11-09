@@ -1,0 +1,435 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#f4f5f8" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0d0f14" media="(prefers-color-scheme: dark)">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Cerca Brani">
+<title>Cerca Brani</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: colonna unica, titolo grande con carattere, scheda di ricerca, risultati a schede con etichetta di disponibilità. */
+:root{
+  --bg:#f4f5f8; --surface:#ffffff; --ink:#12151c; --ink2:#5b6270; --ink3:#9097a4;
+  --line:#e2e5ec; --field:#eef0f5; --shadow:0 1px 2px rgba(18,21,28,.05),0 8px 24px rgba(18,21,28,.06);
+  --free:#0f8f5f; --free-soft:rgba(15,143,95,.12); --paid:#b86a00; --paid-soft:rgba(184,106,0,.13);
+  --warn:#6b7280; --warn-soft:rgba(107,114,128,.14); --bad:#d92d20; --scrim:rgba(10,12,18,.45);
+  --accent:#3b5bfd; --accent-text:#2c45c9; --accent-soft:rgba(59,91,253,.12); --accent-ink:#ffffff;
+  --display:"Bricolage Grotesque","Avenir Next","Segoe UI",system-ui,sans-serif;
+  --body:"Figtree",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0d0f14; --surface:#171a21; --ink:#eef0f5; --ink2:#a3aab8; --ink3:#6b7280;
+    --line:#262a33; --field:#1f232c; --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);
+    --free:#3ddc97; --free-soft:rgba(61,220,151,.15); --paid:#f5b04a; --paid-soft:rgba(245,176,74,.16);
+    --warn:#a3aab8; --warn-soft:rgba(163,170,184,.16); --bad:#ff6b5e; --scrim:rgba(0,0,0,.6); color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0d0f14; --surface:#171a21; --ink:#eef0f5; --ink2:#a3aab8; --ink3:#6b7280;
+  --line:#262a33; --field:#1f232c; --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);
+  --free:#3ddc97; --free-soft:rgba(61,220,151,.15); --paid:#f5b04a; --paid-soft:rgba(245,176,74,.16);
+  --warn:#a3aab8; --warn-soft:rgba(163,170,184,.16); --bad:#ff6b5e; --scrim:rgba(0,0,0,.6); color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+[hidden]{display:none!important}
+body{
+  margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 var(--body);-webkit-font-smoothing:antialiased;
+  padding-top:calc(14px + env(safe-area-inset-top,0px));
+  padding-bottom:calc(48px + env(safe-area-inset-bottom,0px));
+  padding-left:max(18px,env(safe-area-inset-left,0px));
+  padding-right:max(18px,env(safe-area-inset-right,0px));
+}
+button,input{font:inherit;color:inherit}
+a{color:inherit}
+#app{max-width:680px;margin:0 auto}
+
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--display);font-weight:700;font-size:17px;letter-spacing:-.01em}
+.logo{width:34px;height:34px;border-radius:11px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center}
+.logo svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.dot{width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;cursor:pointer;padding:0}
+.dot i{display:block;width:20px;height:20px;border-radius:50%;background:var(--accent)}
+.dot:focus-visible,.go:focus-visible,.btn:focus-visible,.chip:focus-visible,.act:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+
+.hero{margin:34px 0 22px}
+.hero h1{margin:0;font-family:var(--display);font-weight:800;font-size:clamp(42px,12.5vw,68px);line-height:.98;letter-spacing:-.04em;font-variation-settings:"opsz" 96;text-wrap:balance}
+.hero h1 b{color:var(--accent-text);font-weight:800}
+.lead{margin:14px 0 0;color:var(--ink2);font-size:17px;max-width:40ch}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:24px;padding:18px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:14px}
+.fl{display:flex;flex-direction:column;gap:6px}
+.fl span{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink2)}
+.fl input{width:100%;border:1.5px solid transparent;border-radius:14px;background:var(--field);padding:14px 14px;font-size:17px;min-width:0}
+.fl input::placeholder{color:var(--ink3)}
+.fl input:focus{outline:none;border-color:var(--accent);background:var(--surface)}
+.go{border:0;border-radius:16px;background:var(--accent);color:var(--accent-ink);font-weight:700;font-size:17px;padding:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;font-family:var(--display);letter-spacing:-.01em}
+.go svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.go:disabled{opacity:.6;cursor:default}
+
+.recent{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.recent .lbl{width:100%;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink2)}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:7px 13px;font-size:14px;cursor:pointer;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+#out{margin-top:26px;display:flex;flex-direction:column;gap:12px}
+.sec{margin:14px 2px 0;display:flex;align-items:center;gap:10px;font-family:var(--display);font-weight:700;font-size:20px;letter-spacing:-.02em}
+.sec small{font-family:var(--body);font-weight:600;font-size:13px;color:var(--ink2);background:var(--field);border-radius:999px;padding:2px 9px}
+.res{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:16px;display:flex;flex-direction:column;gap:10px;box-shadow:var(--shadow)}
+.res h3{margin:0;font-family:var(--display);font-weight:700;font-size:20px;line-height:1.2;letter-spacing:-.02em;overflow-wrap:anywhere}
+.res .au{margin:0;color:var(--ink2);overflow-wrap:anywhere}
+.badges{display:flex;flex-wrap:wrap;gap:6px}
+.b{font-size:12.5px;font-weight:700;border-radius:999px;padding:4px 10px;letter-spacing:.01em}
+.b.free{background:var(--free-soft);color:var(--free)}
+.b.paid{background:var(--paid-soft);color:var(--paid)}
+.b.warn{background:var(--warn-soft);color:var(--warn)}
+.b.src{background:var(--field);color:var(--ink2);font-weight:600}
+.note{margin:0;font-size:14.5px;color:var(--ink2);overflow-wrap:anywhere}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;border-radius:14px;padding:13px 16px;font-weight:700;text-decoration:none;text-align:center;cursor:pointer;border:0;font-size:16px}
+.btn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2.3;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.btn.main{background:var(--accent);color:var(--accent-ink)}
+.btn.soft{background:var(--accent-soft);color:var(--accent-text)}
+.btn.ghost{background:none;color:var(--accent-text);font-weight:600}
+.hint{margin:-2px 0 0;font-size:13px;color:var(--ink3)}
+.state{background:var(--surface);border:1px dashed var(--line);border-radius:20px;padding:26px 20px;text-align:center;display:flex;flex-direction:column;gap:10px;align-items:center}
+.state h3{margin:0;font-family:var(--display);font-size:20px;letter-spacing:-.02em}
+.state p{margin:0;color:var(--ink2);max-width:36ch}
+.spin{width:30px;height:30px;border-radius:50%;border:3px solid var(--field);border-top-color:var(--accent);animation:rot .9s linear infinite}
+@keyframes rot{to{transform:rotate(360deg)}}
+.fine{margin:30px 4px 0;font-size:12.5px;color:var(--ink3);max-width:60ch}
+
+#sheet{position:fixed;inset:0;z-index:40;display:flex;align-items:flex-end;justify-content:center;background:var(--scrim)}
+#sheet .sh{width:100%;max-width:680px;max-height:92%;overflow:auto;background:var(--bg);border-radius:28px 28px 0 0;
+  padding:22px max(20px,env(safe-area-inset-left,0px)) calc(22px + env(safe-area-inset-bottom,0px)) max(20px,env(safe-area-inset-right,0px));
+  display:flex;flex-direction:column;gap:14px}
+.sh h2{margin:0;font-family:var(--display);font-size:26px;font-weight:800;letter-spacing:-.03em}
+.sh .cap{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink2);margin-top:6px}
+.sh p{margin:0;font-size:14.5px;color:var(--ink2)}
+.sw{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;justify-items:center;padding:4px 0}
+.sw button{width:50px;height:50px;border-radius:50%;border:0;cursor:pointer;padding:0;display:grid;place-items:center}
+.sw button[aria-pressed="true"]{box-shadow:0 0 0 3px var(--bg),0 0 0 5px var(--ink)}
+.sw button svg{width:20px;height:20px;stroke:#fff;stroke-width:3;fill:none;stroke-linecap:round;stroke-linejoin:round;opacity:0;filter:drop-shadow(0 0 1px rgba(0,0,0,.5))}
+.sw button[aria-pressed="true"] svg{opacity:1}
+.cust{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px 14px}
+.cust input{width:48px;height:32px;border:0;padding:0;background:none;cursor:pointer}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);background:var(--field);border-radius:12px;padding:3px;gap:3px}
+.seg button{border:0;background:none;border-radius:9px;padding:9px 4px;font-size:15px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--surface);font-weight:700;box-shadow:0 1px 3px rgba(0,0,0,.18)}
+.sh .fl input{background:var(--surface);border:1px solid var(--line)}
+.sh .fl input:focus{border-color:var(--accent)}
+.stack{display:flex;flex-direction:column;gap:10px;margin-top:6px}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(24px + env(safe-area-inset-bottom,0px));z-index:50;background:var(--ink);color:var(--bg);padding:11px 18px;border-radius:999px;font-size:15px;max-width:min(90%,420px);text-align:center}
+@media (prefers-reduced-motion: reduce){.spin{animation:none;border-top-color:var(--accent);border-right-color:var(--accent)}}
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="top">
+    <div class="brand"><span class="logo"><svg viewBox="0 0 24 24"><path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/></svg></span>Cerca Brani</div>
+    <button class="dot" id="setBtn" type="button" aria-label="Colori e impostazioni"><i></i></button>
+  </header>
+
+  <section class="hero">
+    <h1>Trova lo spartito<b>.</b></h1>
+    <p class="lead">Dimmi autore e brano. Cerco online e ti do il PDF se è gratis, oppure il sito dove comprarlo.</p>
+  </section>
+
+  <form class="card" id="f" autocomplete="off">
+    <label class="fl"><span>Autore</span><input id="au" type="text" placeholder="Es. Ludwig van Beethoven" enterkeyhint="next"></label>
+    <label class="fl"><span>Brano</span><input id="br" type="text" placeholder="Es. Sonata al chiaro di luna" enterkeyhint="search"></label>
+    <button class="go" id="go" type="submit"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>Cerca online</button>
+  </form>
+  <div class="recent" id="recent"></div>
+
+  <main id="out" aria-live="polite"></main>
+  <p class="fine">Le ricerche usano Google tramite Gemini. “Gratis” significa che il sito offre il PDF senza pagare, di solito perché l'opera è di dominio pubblico: i diritti cambiano da Paese a Paese. Prima di scaricare o comprare controlla sempre sul sito che l'edizione sia quella giusta.</p>
+</div>
+
+<div id="sheet" hidden></div>
+<div id="toast" hidden role="status"></div>
+
+<script>
+(function(){
+'use strict';
+var $=function(s){return document.querySelector(s)};
+var LS='cerca-brani-v1',DEFAULT_MODEL='gemini-flash-latest';
+var CHECK='<svg viewBox="0 0 24 24"><path d="M5 12.5l4.2 4.2L19 7"/></svg>';
+var ARROW='<svg viewBox="0 0 24 24"><path d="M7 17L17 7M9 7h8v8"/></svg>';
+var PRESETS=[['Cobalto','#3b5bfd'],['Smeraldo','#12a37a'],['Corallo','#ff5a4f'],['Ambra','#f5a400'],['Viola','#8b5cf6'],['Rosa','#ec4899'],['Turchese','#0ea5c6'],['Grafite','#3f4756']];
+var C={key:'',model:DEFAULT_MODEL,accent:'#3b5bfd',theme:'auto',recent:[]};
+var ctl=null,toastT=null;
+
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function toast(m){var t=$('#toast');t.textContent=m;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(function(){t.hidden=true},2600)}
+function load(){try{var a=JSON.parse(localStorage.getItem(LS)||'null');if(a){['key','model','accent','theme'].forEach(function(k){if(a[k])C[k]=a[k]});if(Array.isArray(a.recent))C.recent=a.recent.slice(0,6)}}catch(e){}}
+function save(){try{localStorage.setItem(LS,JSON.stringify(C))}catch(e){}}
+
+/* ---------- colori ---------- */
+function hexRgb(h){var m=/^#?([0-9a-f]{6})$/i.exec(h||'');if(!m) return null;var n=parseInt(m[1],16);return [(n>>16)&255,(n>>8)&255,n&255]}
+function mix(c,t,a){return c.map(function(v,i){return Math.round(v*(1-a)+t[i]*a)})}
+function rgb(c){return 'rgb('+c.join(',')+')'}
+function lum(c){var f=c.map(function(v){v/=255;return v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4)});return .2126*f[0]+.7152*f[1]+.0722*f[2]}
+function ink(c){return lum(c)>.5?'#12151c':'#ffffff'}
+function applyLook(){
+  var c=hexRgb(C.accent)||[59,91,253];
+  var lt=mix(c,[0,0,0],lum(c)>.4?.5:.22),dk=mix(c,[255,255,255],.12);
+  var light='--accent:'+rgb(c)+';--accent-text:'+rgb(lt)+';--accent-soft:rgba('+c.join(',')+',.12);--accent-ink:'+ink(c);
+  var dark='--accent:'+rgb(dk)+';--accent-text:'+rgb(dk)+';--accent-soft:rgba('+dk.join(',')+',.2);--accent-ink:'+ink(dk);
+  var st=document.getElementById('look');
+  if(!st){st=document.createElement('style');st.id='look';document.body.appendChild(st)}
+  st.textContent=':root{'+light+'}@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){'+dark+'}}:root[data-theme="dark"]{'+dark+'}';
+  var r=document.documentElement;
+  if(C.theme==='light'||C.theme==='dark') r.setAttribute('data-theme',C.theme); else r.removeAttribute('data-theme');
+}
+
+/* ---------- impostazioni ---------- */
+function openSheet(msg){
+  var el=$('#sheet');el.hidden=false;
+  var cur=hexRgb(C.accent)?C.accent.toLowerCase():'#3b5bfd';
+  var sw=PRESETS.map(function(p){return '<button type="button" data-col="'+p[1]+'" aria-label="'+p[0]+'" aria-pressed="'+(p[1]===cur)+'" style="background:'+p[1]+'">'+CHECK+'</button>'}).join('');
+  var th=[['auto','Automatico'],['light','Chiaro'],['dark','Scuro']].map(function(t){return '<button type="button" data-theme-set="'+t[0]+'" aria-pressed="'+(C.theme===t[0])+'">'+t[1]+'</button>'}).join('');
+  el.innerHTML='<div class="sh" role="dialog" aria-modal="true" aria-label="Impostazioni">'
+   +'<h2>Impostazioni</h2>'+(msg?'<p style="color:var(--ink);font-weight:600">'+esc(msg)+'</p>':'')
+   +'<div class="cap">Colore principale</div><div class="sw">'+sw+'</div>'
+   +'<div class="cust"><label for="cust">Colore personalizzato</label><input id="cust" type="color" value="'+cur+'"></div>'
+   +'<div class="cap">Aspetto</div><div class="seg">'+th+'</div>'
+   +'<div class="cap">Chiave Gemini</div>'
+   +'<label class="fl"><span style="position:absolute;left:-9999px">Chiave API</span><input id="cfg-key" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" value="'+esc(C.key)+'" placeholder="Incolla qui la chiave"></label>'
+   +'<p>La prendi gratis su <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" style="color:var(--accent-text)">aistudio.google.com/apikey</a>. Resta salvata solo su questo telefono.</p>'
+   +'<label class="fl"><span>Modello</span><input id="cfg-model" type="text" autocapitalize="off" spellcheck="false" value="'+esc(C.model)+'" placeholder="'+DEFAULT_MODEL+'"></label>'
+   +'<div class="stack"><button class="btn main" data-act="save" type="button">Fine</button></div></div>';
+}
+function closeSheet(){var el=$('#sheet');el.hidden=true;el.innerHTML=''}
+function saveKeyFields(){
+  var k=$('#cfg-key'),m=$('#cfg-model');
+  if(k) C.key=k.value.trim();
+  if(m) C.model=m.value.trim()||DEFAULT_MODEL;
+  save();
+}
+
+/* ---------- ricerca con Gemini ---------- */
+function codeErr(code){
+  switch(code){
+    case 'bad_key':return 'La chiave Gemini non è valida o non ha i permessi. Controllala nelle impostazioni.';
+    case 'bad_model':return 'Il modello indicato non esiste. Nelle impostazioni prova con '+DEFAULT_MODEL+'.';
+    case 'rate_limited':return 'Hai raggiunto il limite di richieste del piano gratuito. Aspetta un minuto e riprova.';
+    case 'network':return 'Nessuna connessione, oppure la richiesta è stata bloccata. Controlla la rete e riprova.';
+    case 'upstream':return 'Gemini è sovraccarico in questo momento. Riprova tra poco.';
+    case 'search_off':return 'Questo modello non permette la ricerca sul web. Nelle impostazioni prova con '+DEFAULT_MODEL+'.';
+    default:return 'Qualcosa è andato storto durante la ricerca. Riprova.';
+  }
+}
+async function gem(body,signal){
+  var model=String(C.model||DEFAULT_MODEL).trim().replace(/^models\//,'');
+  var url='https://generativelanguage.googleapis.com/v1beta/models/'+encodeURIComponent(model)+':generateContent';
+  var res;
+  try{
+    res=await fetch(url,{method:'POST',signal:signal,headers:{'Content-Type':'application/json','x-goog-api-key':C.key},body:JSON.stringify(body)});
+  }catch(e){ if(e&&e.name==='AbortError') throw {code:'cancelled'}; throw {code:'network'} }
+  var j=null;try{j=await res.json()}catch(e){}
+  if(!res.ok){
+    var msg=(j&&j.error&&j.error.message)||'';
+    if(res.status===429) throw {code:'rate_limited'};
+    if(res.status===404) throw {code:'bad_model'};
+    if(res.status===400&&/api key/i.test(msg)) throw {code:'bad_key'};
+    if(res.status===400&&/search|tool/i.test(msg)) throw {code:'search_off'};
+    if(res.status===401||res.status===403) throw {code:'bad_key'};
+    if(res.status>=500) throw {code:'upstream'};
+    throw {code:'other'};
+  }
+  return j;
+}
+function textOf(j){
+  var c=j&&j.candidates&&j.candidates[0];
+  return ((c&&c.content&&c.content.parts)||[]).map(function(p){return p.text||''}).join('');
+}
+function parseJson(t){
+  try{return JSON.parse(t)}catch(e){}
+  var a=t.indexOf('{'),b=t.lastIndexOf('}');
+  if(a>=0&&b>a){try{return JSON.parse(t.slice(a,b+1))}catch(e){}}
+  return null;
+}
+function annotate(text,supports){
+  var enc=new TextEncoder(),dec=new TextDecoder(),bytes=Array.from(enc.encode(text)),marks=[];
+  (supports||[]).forEach(function(s){
+    var e=s&&s.segment&&s.segment.endIndex,ids=(s&&s.groundingChunkIndices)||[];
+    if(typeof e==='number'&&ids.length) marks.push([e,ids]);
+  });
+  marks.sort(function(a,b){return b[0]-a[0]});
+  marks.forEach(function(m){
+    var tag=Array.from(enc.encode(' ['+m[1].map(function(i){return i+1}).join(',')+']'));
+    bytes.splice.apply(bytes,[Math.min(m[0],bytes.length),0].concat(tag));
+  });
+  return dec.decode(new Uint8Array(bytes));
+}
+function promptSearch(au,br){
+  return 'Sei un bibliotecario musicale esperto. Cerca sul web spartiti musicali (partiture, sheet music) con questi dati.\n'
+   +'Autore: '+(au||'non indicato')+'\nBrano: '+(br||'non indicato')+'\n\n'
+   +'Compito: trova dove si può ottenere lo spartito in PDF online. Distingui:\n'
+   +'- GRATIS: PDF scaricabile senza pagare (per esempio IMSLP e altre biblioteche di dominio pubblico).\n'
+   +'- A PAGAMENTO: spartito venduto (per esempio negozi di spartiti online), indicando il sito e il prezzo se è visibile.\n\n'
+   +'Regole: riporta SOLO il brano richiesto, anche in edizioni, arrangiamenti o trascrizioni diverse. Non aggiungere altri brani dello stesso autore.'
+   +(br?'':' Poiché è indicato solo l\'autore, elenca al massimo 8 delle sue opere più note per cui trovi uno spartito.')
+   +' Non inventare siti, prezzi o disponibilità: se non trovi nulla di affidabile, dillo.\n'
+   +'Rispondi in italiano, con una riga per risultato.';
+}
+function promptParse(au,br,text,sources){
+  var list=sources.map(function(s,i){return s?('['+(i+1)+'] '+s.title+' — '+s.uri):null}).filter(Boolean).slice(0,30).join('\n');
+  return 'Dati richiesti dall\'utente — Autore: '+(au||'non indicato')+'. Brano: '+(br||'non indicato')+'.\n\n'
+   +'Risultato di una ricerca web (i numeri tra parentesi quadre indicano la fonte):\n'+text+'\n\nFonti:\n'+list+'\n\n'
+   +'Trasforma il risultato in JSON, senza altro testo, in questo formato:\n'
+   +'{"results":[{"autore":"","brano":"","disponibilita":"gratis","fonte":1,"prezzo":"","nota":""}]}\n\n'
+   +'Regole:\n'
+   +'- Un elemento per ogni spartito o edizione trovata del brano richiesto. Escludi qualsiasi altro brano.\n'
+   +'- "disponibilita" è "gratis" solo se la ricerca dice che il PDF si scarica senza pagare; "a_pagamento" se va acquistato; "non_chiaro" negli altri casi.\n'
+   +'- "fonte" è il numero della fonte che sostiene quel risultato, preso solo dall\'elenco. Se nessuna fonte lo sostiene, non includere il risultato.\n'
+   +'- "prezzo" solo se scritto nella ricerca, altrimenti stringa vuota.\n'
+   +'- "nota" breve (edizione, strumento, curatore) o stringa vuota.\n'
+   +'- Non inventare nulla. Se non ci sono risultati, rispondi {"results":[]}.';
+}
+function setBusy(m){var e=$('#busy-msg');if(e)e.textContent=m}
+function showBusy(){
+  $('#out').innerHTML='<div class="state"><div class="spin" aria-hidden="true"></div><h3>Cerco online</h3><p id="busy-msg">Cerco gli spartiti…</p><button class="btn ghost" data-act="stop" type="button">Interrompi</button></div>';
+}
+function normRes(data,sources){
+  var arr=Array.isArray(data)?data:((data&&data.results)||[]);
+  var out=[],seen={};
+  arr.forEach(function(r){
+    var n=parseInt(r&&r.fonte,10),s=sources[n-1];
+    if(!s||!/^https:\/\//i.test(s.uri)) return;
+    var disp=String(r.disponibilita||'').toLowerCase();
+    disp=/gratis|free/.test(disp)?'gratis':/pagamento|paid/.test(disp)?'pagamento':'incerto';
+    var title=String(r.brano||'').trim(),au=String(r.autore||'').trim();
+    if(!title) return;
+    var key=n+'|'+title.toLowerCase()+'|'+disp;
+    if(seen[key]) return; seen[key]=1;
+    out.push({brano:title,autore:au,disp:disp,uri:s.uri,site:s.title||'sito',prezzo:String(r.prezzo||'').trim(),nota:String(r.nota||'').trim()});
+  });
+  return out;
+}
+async function search(){
+  var au=$('#au').value.trim(),br=$('#br').value.trim();
+  if(!au&&!br){toast('Scrivi almeno un autore o un brano');return}
+  if(!C.key){openSheet('Per cercare serve la chiave Gemini. Incollala qui sotto e tocca Fine.');return}
+  ctl=new AbortController();var signal=ctl.signal;
+  $('#go').disabled=true;showBusy();
+  try{
+    var j1=await gem({contents:[{role:'user',parts:[{text:promptSearch(au,br)}]}],tools:[{google_search:{}}],generationConfig:{temperature:.2}},signal);
+    var text=textOf(j1),gm=(j1.candidates&&j1.candidates[0]&&j1.candidates[0].groundingMetadata)||{};
+    var sources=(gm.groundingChunks||[]).map(function(c){return c&&c.web?{title:c.web.title||'',uri:c.web.uri}:null});
+    var real=sources.filter(Boolean);
+    var items=[];
+    if(text&&real.length){
+      setBusy('Controllo le fonti…');
+      var j2=await gem({contents:[{role:'user',parts:[{text:promptParse(au,br,annotate(text,gm.groundingSupports),sources)}]}],generationConfig:{temperature:0,responseMimeType:'application/json',maxOutputTokens:8000}},signal);
+      var data=parseJson(textOf(j2));
+      if(!data) throw {code:'other'};
+      items=normRes(data,sources);
+    }
+    remember(au,br);
+    renderResults(items,au,br);
+  }catch(e){
+    if(e&&e.code==='cancelled'){$('#out').innerHTML='';toast('Ricerca interrotta')}
+    else renderError(codeErr(e&&e.code));
+  }finally{ctl=null;$('#go').disabled=false}
+}
+function remember(au,br){
+  var k=(au+'|'+br).toLowerCase();
+  C.recent=[{au:au,br:br}].concat(C.recent.filter(function(r){return (r.au+'|'+r.br).toLowerCase()!==k})).slice(0,6);
+  save();renderRecent();
+}
+
+/* ---------- viste ---------- */
+function renderRecent(){
+  var h='';
+  if(C.recent.length){
+    h='<div class="lbl">Ultime ricerche</div>'+C.recent.map(function(r,i){
+      var t=[r.au,r.br].filter(Boolean).join(' · ');
+      return '<button class="chip" type="button" data-recent="'+i+'">'+esc(t)+'</button>';
+    }).join('');
+  }
+  $('#recent').innerHTML=h;
+}
+function card(r){
+  var badge=r.disp==='gratis'?'<span class="b free">PDF gratuito</span>':r.disp==='pagamento'?'<span class="b paid">A pagamento'+(r.prezzo?' · '+esc(r.prezzo):'')+'</span>':'<span class="b warn">Da verificare</span>';
+  var btn,hint;
+  if(r.disp==='gratis'){btn='<a class="btn main" href="'+esc(r.uri)+'" target="_blank" rel="noopener noreferrer">Apri il PDF '+ARROW+'</a>';hint='Si apre la pagina di '+esc(r.site)+' da cui scaricare il PDF.'}
+  else if(r.disp==='pagamento'){btn='<a class="btn main" href="'+esc(r.uri)+'" target="_blank" rel="noopener noreferrer">Vai all\'acquisto '+ARROW+'</a>';hint='Acquisto su '+esc(r.site)+'. Il pagamento si fa sul loro sito.'}
+  else{btn='<a class="btn soft" href="'+esc(r.uri)+'" target="_blank" rel="noopener noreferrer">Apri la fonte '+ARROW+'</a>';hint='Non è chiaro se il PDF sia gratuito o a pagamento: controlla sul sito.'}
+  return '<article class="res"><div class="badges">'+badge+'<span class="b src">'+esc(r.site)+'</span></div>'
+    +'<h3>'+esc(r.brano)+'</h3>'+(r.autore?'<p class="au">'+esc(r.autore)+'</p>':'')+(r.nota?'<p class="note">'+esc(r.nota)+'</p>':'')
+    +btn+'<p class="hint">'+hint+'</p></article>';
+}
+function renderResults(items,au,br){
+  var q=[au,br].filter(Boolean).join(' · ');
+  if(!items.length){
+    $('#out').innerHTML='<div class="state"><h3>Nessuno spartito trovato</h3><p>Per “'+esc(q)+'” non ho trovato fonti affidabili. Prova a scrivere il titolo in un\'altra lingua (per esempio “Moonlight Sonata”) o il nome completo dell\'autore.</p></div>';
+    return;
+  }
+  var groups=[['gratis','PDF gratuiti'],['pagamento','A pagamento'],['incerto','Da verificare']];
+  var h='';
+  groups.forEach(function(g){
+    var l=items.filter(function(i){return i.disp===g[0]});
+    if(l.length) h+='<h2 class="sec">'+g[1]+' <small>'+l.length+'</small></h2>'+l.map(card).join('');
+  });
+  $('#out').innerHTML=h;
+  var first=$('#out');if(first&&first.scrollIntoView){try{first.scrollIntoView({behavior:'smooth',block:'start'})}catch(e){}}
+}
+function renderError(msg){
+  $('#out').innerHTML='<div class="state"><h3>Ricerca non riuscita</h3><p>'+esc(msg)+'</p><button class="btn soft" data-act="settings" type="button">Apri le impostazioni</button></div>';
+}
+
+/* ---------- eventi ---------- */
+$('#f').addEventListener('submit',function(e){e.preventDefault();if(!$('#go').disabled)search()});
+$('#setBtn').addEventListener('click',function(){openSheet()});
+document.addEventListener('click',function(e){
+  var t=e.target;
+  var c=t.closest('[data-col]');
+  if(c){saveKeyFields();C.accent=c.dataset.col;save();applyLook();openSheet();return}
+  var th=t.closest('[data-theme-set]');
+  if(th){saveKeyFields();C.theme=th.dataset.themeSet;save();applyLook();openSheet();return}
+  var rc=t.closest('[data-recent]');
+  if(rc){var r=C.recent[+rc.dataset.recent];if(r){$('#au').value=r.au;$('#br').value=r.br;search()}return}
+  var a=t.closest('[data-act]');if(!a) return;
+  if(a.dataset.act==='save'){saveKeyFields();closeSheet();toast('Salvato')}
+  else if(a.dataset.act==='stop'){if(ctl) ctl.abort()}
+  else if(a.dataset.act==='settings'){openSheet()}
+});
+document.addEventListener('input',function(e){
+  if(e.target&&e.target.id==='cust'){C.accent=e.target.value;save();applyLook()}
+});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!$('#sheet').hidden){saveKeyFields();closeSheet()}});
+
+/* ---------- icona e manifest per la schermata Home ---------- */
+function setupInstall(){
+  try{
+    function ic(n){var c=document.createElement('canvas');c.width=c.height=n;var x=c.getContext('2d');
+      x.fillStyle='#3b5bfd';x.fillRect(0,0,n,n);
+      x.strokeStyle='#fff';x.fillStyle='#fff';x.lineWidth=n*.07;x.lineCap='round';x.lineJoin='round';
+      x.beginPath();x.moveTo(n*.4,n*.68);x.lineTo(n*.4,n*.28);x.lineTo(n*.72,n*.22);x.lineTo(n*.72,n*.62);x.stroke();
+      x.beginPath();x.arc(n*.31,n*.7,n*.1,0,7);x.fill();x.beginPath();x.arc(n*.63,n*.64,n*.1,0,7);x.fill();
+      return c.toDataURL('image/png')}
+    var a=ic(180),b=ic(192),c=ic(512);
+    var l=document.createElement('link');l.rel='apple-touch-icon';l.href=a;document.head.appendChild(l);
+    var l2=document.createElement('link');l2.rel='icon';l2.href=b;document.head.appendChild(l2);
+    if(/^https?:/.test(location.protocol)){
+      var u=location.href.split('#')[0];
+      var m={name:'Cerca Brani',short_name:'Cerca Brani',lang:'it',start_url:u,scope:u.replace(/[^\/]*$/,''),display:'standalone',background_color:'#f4f5f8',theme_color:'#3b5bfd',icons:[{src:b,sizes:'192x192',type:'image/png'},{src:c,sizes:'512x512',type:'image/png'}]};
+      var ml=document.createElement('link');ml.rel='manifest';ml.href='data:application/manifest+json;charset=utf-8,'+encodeURIComponent(JSON.stringify(m));document.head.appendChild(ml);
+    }
+  }catch(e){}
+}
+
+load();applyLook();renderRecent();setupInstall();
+})();
+</script>
+</body>
+</html>
